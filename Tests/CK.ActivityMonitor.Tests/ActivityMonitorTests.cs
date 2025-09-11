@@ -848,7 +848,7 @@ public class ActivityMonitorTests
         var tester = m.Output.RegisterClient( new ActivityMonitorClientTester() );
 
         m.Error( "Hello World!" );
-        tester.ReceivedTexts.ShouldContain( s => s.Contains( "Hello World!" ) );
+        tester.ReceivedTexts.ShouldNotBeNull().ShouldContain( s => s.Contains( "Hello World!" ) );
         // This is totally artificial since IsDead is normally hidden 
         // by IActivityMonitorBoundClients.
         tester.IsDead = true;
@@ -868,7 +868,7 @@ public class ActivityMonitorTests
         var tester = m.Output.RegisterClient( new ActivityMonitorClientTester() );
 
         m.Error( "Hello World!" );
-        tester.ReceivedTexts.ShouldContain( s => s.Contains( "Hello World!" ) );
+        tester.ReceivedTexts.ShouldNotBeNull().ShouldContain( s => s.Contains( "Hello World!" ) );
         tester.AsyncDieAndWait( 20 );
         m.Error( "NEVER RECEIVED" );
 
@@ -917,7 +917,7 @@ public class ActivityMonitorTests
         ActivityMonitor m = new ActivityMonitor( ActivityMonitorOptions.SkipAutoConfiguration );
         var tester = m.Output.RegisterClient( new ActivityMonitorClientTester() );
         m.Fatal( new Exception( "" ) );
-        tester.ReceivedTexts
+        tester.ReceivedTexts.ShouldNotBeNull()
             .ShouldMatch( e => e.Any( t => t.Contains( "[no-log]" ) ) );
 
     }
