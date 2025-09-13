@@ -52,10 +52,13 @@ public static class LogFilterMatcherExtension
                 {
                     f = LogFilter.Verbose;
                 }
-                else if( m.TryMatch( "Normal", StringComparison.OrdinalIgnoreCase ) || m.TryMatch( "Monitor", StringComparison.OrdinalIgnoreCase ) )
+                else if( m.TryMatch( "Normal", StringComparison.OrdinalIgnoreCase ) )
                 {
-                    Throw.DebugAssert( LogFilter.Normal == LogFilter.Monitor );
                     f = LogFilter.Normal;
+                }
+                else if( m.TryMatch( "Monitor", StringComparison.OrdinalIgnoreCase ) )
+                {
+                    f = LogFilter.Monitor;
                 }
                 else if( m.TryMatch( "Minimal", StringComparison.OrdinalIgnoreCase ) || m.TryMatch( "Terse", StringComparison.OrdinalIgnoreCase ) )
                 {
