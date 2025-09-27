@@ -70,10 +70,10 @@ public readonly struct LogFilter : IEquatable<LogFilter>
     static public LogFilter Detailed => Trace;
 
     /// <summary>
-    /// Normal is {Trace,Warn}.
+    /// Normal is {Info,Info}.
     /// See https://learn.microsoft.com/en-us/dotnet/standard/commandline/syntax#the---verbosity-option.
     /// </summary>
-    static public LogFilter Normal => Monitor;
+    static public LogFilter Normal => new LogFilter( LogLevelFilter.Info, LogLevelFilter.Info );
 
     /// <summary>
     /// Minimal is {Info,Warn}.
