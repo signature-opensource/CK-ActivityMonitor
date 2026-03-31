@@ -94,7 +94,7 @@ static class TestHelper
     {
         if( _solutionFolder != null ) return;
         NormalizedPath path = AppContext.BaseDirectory;
-        var s = path.PathsToFirstPart( null, new[] { "CK-ActivityMonitor.sln" } ).FirstOrDefault( p => File.Exists( p ) );
+        var s = path.PathsToFirstPart( null, ["CK-ActivityMonitor.slnx", "CK-ActivityMonitor.sln"] ).FirstOrDefault( p => File.Exists( p ) );
         if( s.IsEmptyPath ) throw new InvalidOperationException( $"Unable to find CK-ActivityMonitor.sln above '{AppContext.BaseDirectory}'." );
         _solutionFolder = s.RemoveLastPart();
         _testFolder = Path.Combine( _solutionFolder, "Tests", "CK.ActivityMonitor.Tests", "TestFolder" );
