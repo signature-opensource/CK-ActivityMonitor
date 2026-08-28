@@ -8,7 +8,6 @@
   </Folder>
   <Folder Name="/Solution Items/Doc/">
     <File Path="Common/Doc/ColoredConsoleOutput.png" />
-    <File Path="Doc/ActivityModel.png" />
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="Tests/CK.ActivityMonitor.Tests/CK.ActivityMonitor.Tests.csproj" />
