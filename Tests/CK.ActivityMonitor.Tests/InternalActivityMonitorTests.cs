@@ -28,16 +28,22 @@ public class InternalActivityMonitorTests
         protected override void OnOpenGroup( IActivityLogGroup group )
         {
             Throw.DebugAssert( _source != null );
+            // InternalMonitor_logs_time_is_preserved compares the times of the two logs emitted below: the
+            // message is formatted here so that no work (TimeSpan formatting is not free when cold) happens
+            // between them.
+            var sleepMessage = SleepTime != TimeSpan.Zero ? $"SleepTime: {SleepTime}." : null;
             Thread.Sleep( SleepTime );
             if( group.Data.Text == "TalkingClient MUST leave an opened Group on the InternalMonitor." )
                 _source.InternalMonitor.OpenInfo( "Talk: OnOpenGroup (Unclosed)" );
             else _source.InternalMonitor.Info( "Talk: OnOpenGroup" );
-            if( SleepTime != TimeSpan.Zero ) _source.InternalMonitor.Info( $"SleepTime: {SleepTime}." );
+            if( sleepMessage != null ) _source.InternalMonitor.Info( sleepMessage );
         }
 
         protected override void OnUnfilteredLog( ref ActivityMonitorLogData data )
         {
             Throw.DebugAssert( _source != null );
+            // See OnOpenGroup: formatted before the two logs whose times are compared.
+            var sleepMessage = SleepTime != TimeSpan.Zero ? $"SleepTime: {SleepTime}." : null;
             Thread.Sleep( SleepTime );
             if( data.Text.StartsWith( "OPEN AND NOT CLOSE GROUP InternalMonitor" ) )
             {
@@ -47,7 +53,7 @@ public class InternalActivityMonitorTests
             {
                 _source.InternalMonitor.Info( "Talk: OnUnfilteredLog" );
             }
-            if( SleepTime != TimeSpan.Zero ) _source.InternalMonitor.Info( $"SleepTime: {SleepTime}." );
+            if( sleepMessage != null ) _source.InternalMonitor.Info( sleepMessage );
         }
 
         public void CannotTalkWithoutLock()
@@ -136,14 +142,17 @@ public class InternalActivityMonitorTests
         diffs[0].ShouldBeGreaterThanOrEqualTo( beforeLine2 );
         diffs[0].ShouldBeLessThan( beforeLogs );
         // Talk: OnOpenGroup -> SleepTime: 00:00:00.1000000.
-        diffs[1].ShouldBe( TimeSpan.Zero, tolerance: TimeSpan.FromMilliseconds( 5 ) );
+        // These two are logged back to back: their times must be "the same". The tolerance only has to
+        // separate that from a time taken after a beforeLine2 sleep, so it is kept well below it rather
+        // than as tight as the machine happens to allow (a cold run needs more than a handful of ms).
+        diffs[1].ShouldBeLessThan( beforeLine2 );
         // SleepTime: 00:00:00.1000000. -> Line
         diffs[2].ShouldBeGreaterThan( beforeLogs );
         // Line1 -> Talk: OnUnfilteredLog
         diffs[3].ShouldBeGreaterThanOrEqualTo( beforeLine2 );
         diffs[3].ShouldBeLessThan( beforeLogs );
         // Talk: OnUnfilteredLog -> SleepTime: 00:00:00.1000000.
-        diffs[4].ShouldBe( TimeSpan.Zero, tolerance: TimeSpan.FromMilliseconds( 5 ) );
+        diffs[4].ShouldBeLessThan( beforeLine2 );
     }
 
     static void GetTextAndTimes( TimeSpan beforeLogs, TimeSpan beforeTalk, out string[] texts, out DateTime[] times )
