@@ -89,13 +89,13 @@ and this (sad) [story](https://github.com/dotnet/aspnetcore/issues/4731).
 
 ### Our IActivityMonitor-based answer
 
-This simple [AsyncLock](AsyncLock.cs) relies on the fact that the [IActivityMonitor](IActivityMonitor.cs) flows
+This simple [AsyncLock](AsyncLock.cs) relies on the fact that the [IActivityMonitor](CoreModel/IActivityMonitor.cs) flows
 into the code, following the current activity. This identify the participant: it is then trivial to control "who"
 is calling and to react the way we want thanks to the standard [LockRecursionPolicy](https://source.dot.net/#System.Private.CoreLib/ReaderWriterLockSlim.cs,10). 
 
 To ease debugging and maintenance (concurrency is hard), this lock has a name that defaults to the source location of
 where it has been new'ed (source file name and line number). And, since a `IActivityMonitor` is available, logs are
-emitted when entering/leaving the lock under the control of a [StaticGate](StaticGates/README.md).
+emitted when entering/leaving the lock under the control of a [StaticGate](StaticGate/README.md).
 
 [^1]: A Mutex (Mutual Exclusion) is like a car with only one seat: no more that one participant can enjoy the trip.
 A Semaphores is a car with multiple seats: you can choose the number of seats, letting multiple participants playing

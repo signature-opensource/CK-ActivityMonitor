@@ -15,4 +15,4 @@ Start with [CK.ActivityMonitor.SimpleSender](CK.ActivityMonitor.SimpleSender/REA
 and read [CK.ActivityMonitor](CK.ActivityMonitor/README.md) for why the monitor is a parameter rather
 than an ambient context, and for what this logger is trying to be.
 
-Licensed under the MIT licence - see [LICENSE](LICENSE).
+Licensed under the MIT license - see [LICENSE](LICENSE).

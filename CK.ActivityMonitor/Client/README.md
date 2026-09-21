@@ -1,7 +1,7 @@
 # ActivityMonitor clients
 
 The `IActivityMonitor` is the collector of the logs that
-are routed to any number of clients that can be registered onto its [Output](../IActivityMonitorOutput.cs).
+are routed to any number of clients that can be registered onto its [Output](../CoreModel/IActivityMonitorOutput.cs).
 
 The design of the Output and its Clients allows very different kind of
 clients to coexist, that can support funny patterns like counting errors that may
@@ -15,12 +15,16 @@ using( monitor.OnError( () => ++errorCount ) )
     await SafeCodeAsync( monitor );
     monitor.Error( "Ouch! (I'm the only error)." );
 }
-errorCount.Should().Be( 1 );
+errorCount.ShouldBe( 1 );
 
 ```
 
-The `OnError` extension method above uses the [ActivityMonitorErrorCounter](ActivityMonitorErrorCounter.cs) client
-by registering it onto the `Output` and unregistering it when leaving the using scope.
+The `OnError` extension method above registers an `ErrorTracker` client - a small client nested
+in [ActivityMonitorExtension](../ActivityMonitor/ActivityMonitorExtension.cs) - onto the `Output` and unregisters it
+when leaving the using scope. Overloads accept an `Action<string>` to receive the error message, and a distinct
+action for `Fatal`. When the numbers matter rather than the reaction, the
+[ActivityMonitorErrorCounter](ActivityMonitorErrorCounter.cs) client counts the fatals, errors and warnings and can
+automatically conclude the closed groups with the totals.
 
 Other clients like the [ColoredActivityMonitorConsoleClient](ColoredActivityMonitorConsoleClient.cs) routes
 and/or displays the received stream of logs:
@@ -37,7 +41,7 @@ static void Main( string[] args )
     m.MinimalFilter = LogFilter.Terse;
     using( m.OpenInfo( $"Let's go: the actual filter is {m.ActualFilter}." ) )
     {
-        m.Info( "In Terse filter, only Info (and above) groups and only Error or Fatal lines are logged. So you won't see this." );
+        m.Info( "In Terse filter, only Info (and above) groups and only Warn, Error or Fatal lines are logged. So you won't see this." );
 
         using( m.OpenError( "A whole group of error." ) )
         {

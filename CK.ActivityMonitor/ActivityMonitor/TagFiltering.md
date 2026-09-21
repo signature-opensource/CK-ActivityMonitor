@@ -3,9 +3,9 @@
 ## The basics of levels, filters and tags.
 
 First, a log line or group has a [`LogLevel`](../LogLevel.cs): `Debug`, `Trace`, `Info`, `Warn`, `Error`, `Fatal` (in this order).
-This is a simple enum and this is this is decided by the developer (by the method she calls to emit it).
+This is a simple enum and this is decided by the developer (by the method she calls to emit it).
 
-A [`LogLevelFilter`](../LogLevelFilter.cs) is another simple enum that defines a filter for such a level (`Undefined`, `Debug`…`Fatal`).
+A [`LogLevelFilter`](../LogLevelFilter.cs) is another simple enum that defines a filter for such a level (`None`, `Debug`…`Fatal`).
 Since there’s two kind of logs in the ActivityMonitor: Groups (`using( monitor.OpenTrace( … ) )`, etc.) and Line (`monitor.Debug( … )`, etc.),
 a [`LogFilter`](../LogFilter.cs) (a simple struct) defines two `LogLevelFilter`: one for Group and one for Line.
 
@@ -32,7 +32,7 @@ A [`LogClamper`](../LogClamper.cs) is a Filter (that de facto can act as a Minim
 Clamp is false it is just like a MinimaFilter. But when Clamp is true, it “cuts” the level.
 A simple optional ‘!’ suffix to the LogFilter expresses it. For instance: 
 -	“Minimal!” (same as “{Info,Warn}!”): only Warnings lines will be emitted (not Info, Trace or Debug).
--	““{Warn,Trace}!” will only emit Groups with Warn, Error or Fatal and Debug Lines will not be emitted.
+-	“{Warn,Trace}!” will only emit Groups with Warn, Error or Fatal and Debug Lines will not be emitted.
 
 Two `LogClamper` cannot be combined like `LogFilter` since a true `Clamp` cannot be reconciled.
 
@@ -43,7 +43,7 @@ or via the c# | operator). (Note: more performance improvements are possible her
 
 ## TagFilter
 
-A TagFilter is a `ValueTuple<CKtrait,LogClamper>` associates a Tag (that can of course be multiple) and a `LogClamper`.
+A TagFilter is a `ValueTuple<CKTrait,LogClamper>` associates a Tag (that can of course be multiple) and a `LogClamper`.
 
 The static [ActivityMonitor.Tags](ActivityMonitor.Tags.cs) maintains and exposes 2 list of TagFilters:
 

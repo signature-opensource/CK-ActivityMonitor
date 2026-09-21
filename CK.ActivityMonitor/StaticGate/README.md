@@ -32,7 +32,7 @@ of the instantiation however even this is not used as an identity. The true iden
 by the [CoreApplicationIdentity.InstanceId](https://github.com/Invenietis/CK-Core/blob/master/CK.Core/CoreApplicationIdentity/README.md)
 of the running application and the `int Key { get; }` (an incremented index for each gate created).
 
-Gates that have DisplayName can be configured by the [StaticGatesConfigurator](StaticGatesConfigurator.cs) (see below).
+Gates that have DisplayName can be configured by the [StaticGateConfigurator](StaticGatesConfigurator.cs) (see below).
 
 ___
 **Important:** As an optimization, the .Net runtime defers the initialization of the static fields of a Type until
@@ -41,7 +41,7 @@ ___
 To ensure that the static fields of a Type are initialized at the first `new MyType()` instance, one can
 define an empty static constructor (called a Type Initializer). (The other trick that is to "touch" a static
 field in the constructor works but is, by far, less elegant). 
-See the tests [here](../../Tests/CK.ActivityMonitor.Tests//StaticGateTests.StaticGateHolder.cs).
+See the tests [here](../../Tests/CK.ActivityMonitor.Tests/StaticGateTests.StaticGateHolder.cs).
 ___
 
 ## StaticGate opening and closing
@@ -73,7 +73,7 @@ Gate.O(monitor)?.Info( "I'll be emitted only if the Gate is opened." );
 > This `T? O<T>( T instance )` method can be called **with any reference type**, not necessarily
 a `IActivityMonitor`.
 
-Another capability of a gate is to handle access to the [StaticLogger](../../README.md#emitting-logs-the-ilogger-static-contextless-way):
+Another capability of a gate is to handle access to the [StaticLogger](../README.md#istaticlogger-iparallellogger-and-iactivitymonitor):
 ```csharp
 Gate.StaticLogger?.Error( $"I'll be emitted only if the Gate is opened." );
 ```
@@ -83,7 +83,7 @@ StaticGate should be used in low level code, in hot paths and when the feature i
 a well identified object or part of code (the AsyncLock is good example).
 
 StaticGate should not be used in applicative layer, where activities flow across multiple
-layers of code and the context of the callee is highly relevant: [Tags](../Impl/TagFiltering.md) are much more powerful.
+layers of code and the context of the callee is highly relevant: [Tags](../ActivityMonitor/TagFiltering.md) are much more powerful.
 
 ## StaticGateConfigurator
 
@@ -96,7 +96,7 @@ Applies a new configuration to gates that must have a real display name: gates w
 The configuration string is simple: `"AsyncLock;LowLevelStuff;VeryLowLevelStuff:!"` will
 open the first two and close the "VeryLowLevelStuff" gate.
 
-The configuration applies until a new one is applied (the creation of new gates is tracked thanks to `StaticGate.OnNewStaticGate`.
+The configuration applies until a new one is applied (the creation of new gates is tracked thanks to `StaticGate.OnNewStaticGate`).
 
 ```csharp
 public static string GetConfiguration( bool? openedGates = null );

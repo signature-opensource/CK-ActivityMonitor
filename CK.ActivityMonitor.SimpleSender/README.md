@@ -18,6 +18,10 @@ help to:
 - Open a group of logs (see all the available overloads
   [here](ActivityMonitorSimpleSenderExtension.Group.cs) and
   [here](ActivityMonitorSimpleSenderExtension.Group-Gen.cs)).
+- Describe the running application with
+  [`AddIdentityInformation( key, value )`](ActivityMonitorSimpleSenderExtension.IdentityCard.cs): this sends an
+  unfiltered Info line, tagged `IdentityCardUpdate`, whose text packs the key and the value around a STX (0x02)
+  separator. This one is available on any `IActivityLineEmitter`, so the static logger can use it too.
 
 ```csharp
 using CK.Core;

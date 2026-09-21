@@ -43,7 +43,7 @@ to thread static in the asynchronous world.
 
 Unfortunately, this is much more complex and less efficient than TLS: the information that must "follow the code" is
 encapsulated in an `ExecutionContext`, a kind of associative map whose implementation is deeply rooted in the framework.
-Below a piece of [source](https://source.dot.net/#System.Private.CoreLib/src/libraries/System.Private.CoreLib/src/System/Threading/AsyncLocal.cs,ef9ce034697240ba):
+Below a piece of [source](https://source.dot.net/#System.Private.CoreLib/src/runtime/src/libraries/System.Private.CoreLib/src/System/Threading/AsyncLocal.cs):
 ```c#
     /// <summary>
     /// Interface used to store an IAsyncLocal => object mapping in ExecutionContext.
@@ -222,7 +222,7 @@ classDiagram
     class IActivityMonitorOutput {
         <<interface>>
         +IActivityMonitorClient[] Clients
-        +int MaxInitialReplayCount
+        +int? MaxInitialReplayCount
         +RegisterClient(client, out added, replayInitialLogs)
         +RegisterUniqueClient~T~(tester, factory, replayInitialLogs)
         +UnregisterClient(client)
@@ -258,7 +258,7 @@ classDiagram
 
 `ActualFilter` appears twice on purpose. On `IActivityLineEmitter` it is a `LogLevelFilter`, because at
 that level only lines exist. `IActivityMonitor` shadows it with a `LogFilter`, which is the
-`{Line,Group}` couple of `LogLevelFilter` - a monitor filters groups too.
+`{Group,Line}` couple of `LogLevelFilter` - a monitor filters groups too.
 
 
 ## What this package contains
@@ -279,9 +279,18 @@ The core abstractions and the default `ActivityMonitor` implementation, plus:
   distinct `§ext` is the identifier of the *external* logger, not this one. They are not seen by the
   monitor output clients: they are raised on the static `ActivityMonitor.OnStaticLog` event, so collecting them requires an external
   subscriber.
-- [`ActivityMonitorLogData`](ActivityMonitorLogData.md), the log entry itself, and
-  [tag filtering](ActivityMonitor/TagFiltering.md).
+- [`ActivityMonitorLogData`](ActivityMonitorLogData.md), the log entry itself, its pooled
+  `ActivityMonitorExternalLogData` counterpart and the [`PoolDiagnostics`](PoolDiagnostics/PoolDiagnostics.cs) that
+  reports a missing `Release()` exactly, and [tag filtering](ActivityMonitor/TagFiltering.md).
 - The [DotNetEventSource](DotNetEventSource/README.md) bridge.
+- [`ActivityMonitorOptions`](ActivityMonitorOptions.cs), the flags of the monitor constructors:
+  `SkipAutoConfiguration` opts out of the static `ActivityMonitor.AutoConfiguration`, and `WithInitialReplay` keeps
+  the first logs so that a client registered later can receive them (this is the `replayInitialLogs` argument of
+  `IActivityMonitorOutput.RegisterClient` and the `MaxInitialReplayCount` cap).
+- [`ActivityMonitor.Token`](ActivityMonitor/ActivityMonitor.Token.cs), created by `CreateToken` on any
+  `IActivityDependentTokenFactory` (a monitor or its parallel logger) and consumed by the
+  `ActivityMonitor( Token token )` constructor: this is how an activity that starts elsewhere - another thread,
+  another process - is tied back to the one that caused it.
 
 `StaticLogger` exposes no `OpenGroup`: `IStaticLogger` derives from `IActivityLineEmitter`, which has
 no group member. Note that it goes further than "not offered" - the implementation passes

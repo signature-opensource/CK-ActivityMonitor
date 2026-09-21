@@ -33,7 +33,7 @@ another one `EventLevel.Critical`, the EventSource will honor the Verbose (but w
 "Participants" here are [EventListener](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.tracing.eventlistener) instances that have
 been created so far in the system (a kind of global `IActivityMonitorClient`).
 
-The [EventLevel](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.tracing.eventlevel) has 4 real levels:
+The [EventLevel](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.tracing.eventlevel) has 5 real levels (plus the ambiguous `LogAlways`):
 
 | Level         |   |           Description |
 |---------------|---|---------------------------------------------|
@@ -81,7 +81,7 @@ With this, when playing with sockets, you can see these logs (successful bind bu
 The way the events are rendered may evolve in the future (currently, ActivityId are not dumped).
 Note that the logs coming from an EventSource is tagged with `[EventSource]`.
 
-## When should this be be used?
+## When should this be used?
 When your are in deep trouble and TEMPORARY. Do NOT let any EventSource enabled for a long time, especially on a production system!
 Note that the `DotNetEventSourceCollector.DisableAll()` helper can be called at any time.
 
