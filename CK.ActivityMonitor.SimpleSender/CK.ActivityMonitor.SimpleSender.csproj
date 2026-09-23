@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Description>Provides extension methods to send log entries. The OpenDebug/Trace/Info/Warn/Error/Fatal and Debug, Trace, Info, Warn, Error, Fatal extension methods support file name and line number capture.</Description>
   </PropertyGroup>
   <ItemGroup>
