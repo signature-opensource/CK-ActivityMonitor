@@ -291,6 +291,10 @@ The core abstractions and the default `ActivityMonitor` implementation, plus:
   `IActivityDependentTokenFactory` (a monitor or its parallel logger) and consumed by the
   `ActivityMonitor( Token token )` constructor: this is how an activity that starts elsewhere - another thread,
   another process - is tied back to the one that caused it.
+- [`LocalDevSolution`](LocalDevSolution/LocalDevSolution.cs) finds the git working folder of a solution
+  under development (a main checkout, a linked git worktree or a submodule), its name and its local projects.
+  It is not about logging: it is here because it needs a home that every CK package can use. Its
+  warnings go to `ActivityMonitor.StaticLogger`.
 
 `StaticLogger` exposes no `OpenGroup`: `IStaticLogger` derives from `IActivityLineEmitter`, which has
 no group member. Note that it goes further than "not offered" - the implementation passes
