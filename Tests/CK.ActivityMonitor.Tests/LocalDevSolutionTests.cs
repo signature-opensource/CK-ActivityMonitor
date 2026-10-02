@@ -15,19 +15,27 @@ namespace CK.Core.Tests;
 /// in a temporary folder.
 /// </summary>
 [TestFixture]
+[FixtureLifeCycle( LifeCycle.InstancePerTestCase )]
 public class LocalDevSolutionTests
 {
+    // Each test case has its own instance (see FixtureLifeCycle): these fields are safe with parallel tests.
     NormalizedPath _root;
     string _emptyGlobalConfig = null!;
 
+    static Version? _gitVersion;
+
     [OneTimeSetUp]
-    public void CheckGit()
+    public static void CheckGit()
     {
         try
         {
             using var p = Process.Start( new ProcessStartInfo( "git", "--version" ) { RedirectStandardOutput = true, UseShellExecute = false } );
-            p!.WaitForExit();
+            var output = p!.StandardOutput.ReadToEnd();
+            p.WaitForExit();
             if( p.ExitCode != 0 ) Assert.Ignore( "The git command line does not work." );
+            // The output is "git version 2.51.2.windows.1".
+            var m = System.Text.RegularExpressions.Regex.Match( output, @"(\d+)\.(\d+)" );
+            if( m.Success ) _gitVersion = new Version( int.Parse( m.Groups[1].Value ), int.Parse( m.Groups[2].Value ) );
         }
         catch( Exception ex )
         {
@@ -89,6 +97,11 @@ public class LocalDevSolutionTests
     [TestCase( true )]
     public void worktree_outside_the_repository( bool relativePaths )
     {
+        // The "--relative-paths" option of "git worktree add" exists since git 2.48.
+        if( relativePaths && (_gitVersion == null || _gitVersion < new Version( 2, 48 )) )
+        {
+            Assert.Ignore( $"git worktree add --relative-paths needs git 2.48 or later (found: {_gitVersion?.ToString() ?? "unknown"})." );
+        }
         var main = CreateRepository( "Main" );
         var wt = _root.AppendPart( "Other" );
         if( relativePaths ) Git( main, "worktree", "add", "--detach", "--relative-paths", wt );
@@ -394,7 +407,14 @@ public class LocalDevSolutionTests
         info.Environment["GIT_CONFIG_NOSYSTEM"] = "1";
         info.Environment["GIT_CONFIG_GLOBAL"] = _emptyGlobalConfig;
         info.Environment["GIT_TERMINAL_PROMPT"] = "0";
-        foreach( var v in new[] { "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE" } ) info.Environment.Remove( v );
+        // Inherited git variables (for example from a git hook) must not change the test repositories.
+        // Windows variable names are case insensitive.
+        var inherited = info.Environment.Keys.Where( k => k.ToUpperInvariant() is "GIT_DIR" or "GIT_WORK_TREE" or "GIT_COMMON_DIR" or "GIT_INDEX_FILE"
+                                                                                or "GIT_OBJECT_DIRECTORY" or "GIT_CONFIG_PARAMETERS" or "GIT_CONFIG_COUNT"
+                                                          || k.StartsWith( "GIT_CONFIG_KEY_", StringComparison.OrdinalIgnoreCase )
+                                                          || k.StartsWith( "GIT_CONFIG_VALUE_", StringComparison.OrdinalIgnoreCase ) )
+                                             .ToList();
+        foreach( var v in inherited ) info.Environment.Remove( v );
         using var p = Process.Start( info )!;
         var output = p.StandardOutput.ReadToEndAsync();
         var error = p.StandardError.ReadToEnd();

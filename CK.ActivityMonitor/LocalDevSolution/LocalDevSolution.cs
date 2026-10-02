@@ -25,6 +25,14 @@ public static partial class LocalDevSolution
     /// <para>
     /// In a linked git worktree, this is the worktree folder, not the folder of the main checkout.
     /// </para>
+    /// <para>
+    /// A git submodule is its own solution: this is the submodule folder, not the folder of the superproject.
+    /// This has a cost. When a project of the submodule is built from the superproject solution, the MSBuild
+    /// <c>$(SolutionDir)</c> is the superproject folder. Its "SolutionRelativeProjectPath" (for example
+    /// "libs/sub/P/P.csproj") then does not match a project of the submodule solution, and
+    /// <see cref="FindLocalProjectPath(Assembly, out NormalizedPath)"/> returns false.
+    /// When the submodule solution itself builds the project, this works.
+    /// </para>
     /// </summary>
     public static readonly NormalizedPath SolutionFolder;
 
@@ -170,11 +178,19 @@ public static partial class LocalDevSolution
 
     static void Warn( string text, Exception? ex = null )
     {
-        var logger = ActivityMonitor.StaticLogger;
-        if( logger.ShouldLogLine( LogLevel.Warn, null, out var finalTags ) )
+        // A handler of ActivityMonitor.OnStaticLog can throw. This runs in the type initializer:
+        // an exception here would make this type unusable, so it is ignored.
+        try
         {
-            var d = logger.CreateActivityMonitorLogData( LogLevel.Warn | LogLevel.IsFiltered, finalTags, text, ex, null, 0, false );
-            logger.UnfilteredLog( ref d );
+            var logger = ActivityMonitor.StaticLogger;
+            if( logger.ShouldLogLine( LogLevel.Warn, null, out var finalTags ) )
+            {
+                var d = logger.CreateActivityMonitorLogData( LogLevel.Warn | LogLevel.IsFiltered, finalTags, text, ex, null, 0, false );
+                logger.UnfilteredLog( ref d );
+            }
+        }
+        catch
+        {
         }
     }
 }
