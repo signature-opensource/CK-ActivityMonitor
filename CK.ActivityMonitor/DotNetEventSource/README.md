@@ -1,6 +1,6 @@
 # .Net EventSource
 
-EventSource were available in the good old (dying) .Net framework. It has been ported into .Net Core:
+EventSource is the .NET built-in event tracing mechanism:
 - Starts here: https://learn.microsoft.com/en-us/dotnet/core/diagnostics/eventsource-getting-started
 - And read this if you're wondering "Why not using this instead of the ActivityMonitor library?": https://learn.microsoft.com/en-us/dotnet/core/diagnostics/eventsource-activity-ids
   (and recall that all this amazing Guid stuff relies on the [evil AsyncLocal](https://twitter.com/davidfowl/status/1033964051607379968)).
@@ -78,7 +78,7 @@ With this, when playing with sockets, you can see these logs (successful bind bu
 2023-02-03 09h55.10.3148102 ~### i  [EventSource] [Private.InternalDiagnostics.System.Net.Sockets:4] EventName='Info' Payload={ thisOrContextObject='SafeSocketHandle#43258890' memberName='DoCloseHandle' message='handle:0x604, Following 'blockable' branch' } Keywords='263882790666241' OpCode='Info'
 2023-02-03 09h55.10.3148324 ~### i  [EventSource] [Private.InternalDiagnostics.System.Net.Sockets:4] EventName='Info' Payload={ thisOrContextObject='SafeSocketHandle#43258890' memberName='DoCloseHandle' message='handle:0x604, closesocket()#1:Success' } Keywords='263882790666241' OpCode='Info'
 ```
-The way the events are rendered may evolve in the future (currently, ActivityId are not dumped).
+ActivityIds are not rendered.
 Note that the logs coming from an EventSource is tagged with `[EventSource]`.
 
 ## When should this be used?
@@ -114,7 +114,7 @@ Gets a configuration string that can be applied later by calling `ApplyConfigura
 By default both enabled and disabled EventSources are returned. The `enabled` parameter can be true to only consider the
 enabled ones and false to only return the disabled ones.
 
-The package [CK.Monitoring](https://github.com/Invenietis/CK-Monitoring) uses this to enable its
-GrandOutput configuration to configure the .Net event sources.
+For an example of use in a higher level package, see [CK.Monitoring](https://github.com/signature-opensource/CK-Monitoring/blob/stable/README.md):
+its GrandOutput configuration configures the .Net event sources through this helper.
 
 

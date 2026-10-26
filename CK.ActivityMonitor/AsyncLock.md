@@ -16,7 +16,7 @@ Monitors, once you'll master this http://www.albahari.com/threading/part4.aspx#_
 
 Using a Monitor like this is not possible and, lucky you, the compiler detects it:
 
-![Cannot Await In Lock](../Common/Doc/CannotAwaitInLock.png)
+![Cannot Await In Lock](docs/CannotAwaitInLock.png)
 
 Unfortunately, it won't detect other constructs like when you just want the same lock but with a timeout.
 This compiles perfectly well:

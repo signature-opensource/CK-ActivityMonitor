@@ -29,7 +29,7 @@ public sealed class AsyncLock
 
 The name (here "AsyncLock") is a DisplayName, it doesn't have to be unique. The constructor captures the file name and line number
 of the instantiation however even this is not used as an identity. The true identity of a StaticGate is provided
-by the [CoreApplicationIdentity.InstanceId](https://github.com/Invenietis/CK-Core/blob/master/CK.Core/CoreApplicationIdentity/README.md)
+by the [CoreApplicationIdentity.InstanceId](https://github.com/signature-opensource/CK-Core/blob/stable/CK.Core/CoreApplicationIdentity/README.md)
 of the running application and the `int Key { get; }` (an incremented index for each gate created).
 
 Gates that have DisplayName can be configured by the [StaticGateConfigurator](StaticGatesConfigurator.cs) (see below).
@@ -83,7 +83,7 @@ StaticGate should be used in low level code, in hot paths and when the feature i
 a well identified object or part of code (the AsyncLock is good example).
 
 StaticGate should not be used in applicative layer, where activities flow across multiple
-layers of code and the context of the callee is highly relevant: [Tags](../ActivityMonitor/TagFiltering.md) are much more powerful.
+layers of code and the context of the callee is highly relevant: [Tags](../ActivityMonitor/README.md) are much more powerful.
 
 ## StaticGateConfigurator
 
@@ -105,6 +105,6 @@ Gets a configuration string that can be applied later by calling `ApplyConfigura
 By default both opened and closed gates are returned. The `openedGates` can be set to true to only consider
 the opened gates and false to only return the closed ones (suffixed by ":!").
 
-The package [CK.Monitoring](https://github.com/Invenietis/CK-Monitoring) uses this to enable its
-GrandOutput configuration to configure the StaticGates.
+For an example of use in a higher level package, see [CK.Monitoring](https://github.com/signature-opensource/CK-Monitoring/blob/stable/README.md):
+its GrandOutput configuration configures the StaticGates through this helper.
 

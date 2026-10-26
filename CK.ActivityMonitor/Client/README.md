@@ -29,7 +29,7 @@ automatically conclude the closed groups with the totals.
 Other clients like the [ColoredActivityMonitorConsoleClient](ColoredActivityMonitorConsoleClient.cs) routes
 and/or displays the received stream of logs:
 
-![Colored console sample](../../Common/Doc/ColoredConsoleOutput.png)
+![Colored console sample](../docs/ColoredConsoleOutput.png)
 
 ```csharp
 static void Main( string[] args )
@@ -67,7 +67,48 @@ static void Main( string[] args )
 }
 ```
 
-This sample is available in the [CK-Sample-Monitoring](https://github.com/signature-opensource/CK-Sample-Monitoring) repository.
+This sample is available in the [CK-Sample-Monitoring](https://github.com/signature-opensource/CK-Sample-Monitoring/tree/stable) repository.
 
+## Using a client to assert on what the code logged
 
+The local client architecture enables an interesting pattern for tests. [`CollectTexts`](../ActivityMonitor/ActivityMonitorExtension.cs) registers a
+client that captures what was logged, so the assertion is on the *story* the code told, not on its
+return values. This is
+[`demo_using_CollectTexts`](../../Tests/CK.ActivityMonitor.Tests/DocumentationCodeSnippets.cs), verbatim:
 
+```csharp
+[Test]
+public void demo_using_CollectTexts()
+{
+    var monitor = new ActivityMonitor();
+
+    EventHandler<ActionEvent>? sender = null;
+
+    sender += OnAction;
+
+    using( monitor.CollectTexts( out var texts ) )
+    {
+        sender.Invoke( null, new ActionEvent( monitor, ( monitor, i ) => monitor.Info( $"Action {i}" ) ) );
+        sender.Invoke( monitor, new ActionEvent( monitor, null ) );
+        texts.ShouldBe( new[]
+        {
+            "Received Action and executing it.",
+            "Action 3712",
+            "Received a null Action. Ignoring it."
+        } );
+    }
+
+    static void OnAction( object? sender, ActionEvent e )
+    {
+        if( e.Action == null ) e.Monitor.Warn( "Received a null Action. Ignoring it." );
+        else
+        {
+            e.Monitor.Info( "Received Action and executing it." );
+            e.Action( e.Monitor, 3712 );
+        }
+    }
+}
+```
+
+`ActionEvent` is an [`EventMonitoredArgs`](../EventMonitoredArgs.cs), which is what lets the handler log
+into the monitor of the event rather than into one it captured.

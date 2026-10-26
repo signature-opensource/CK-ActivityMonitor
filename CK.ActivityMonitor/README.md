@@ -2,7 +2,7 @@
 ---
 **Note**
 
-The ActivityMonitor is a different logger. The original motivation (back in... 2004) for that "logger" was to support structured logs ("structured" not in the sense of [SeriLog](https://serilog.net/), but structured as a book can be, with Sections, Parts, Chapters, Paragraphs etc.).
+The ActivityMonitor is a different logger. Its motivation is to support structured logs ("structured" not in the sense of [SeriLog](https://serilog.net/), but structured as a book can be, with Sections, Parts, Chapters, Paragraphs etc.).
 This is an opinionated framework: one strong belief is that **logging is NOT a "cross-cutting concern"** (I know how much this could hurt a lot of architects). Logging is the developer's voice, designing logs is an important mission of the developer: logs
 must describe the program *by* its execution, they tell the story of the running code, they play a crucial role
 in the maintenance, exploitation and evolution phase of any serious project.
@@ -28,7 +28,7 @@ There is basically two such mechanisms: TLS and AsyncLocal.
 
 ### Thread Local Storage (good old synchronous world)
 
-This one is easy, safe, and rather efficient. [Wikipedia](https://fr.wikipedia.org/wiki/Thread_Local_Storage) explains
+This one is easy, safe, and rather efficient. [Wikipedia](https://en.wikipedia.org/wiki/Thread-local_storage) explains
 it well. In C#, this is as simple as using the [ThreadStatic attribute](https://learn.microsoft.com/en-us/dotnet/api/system.threadstaticattribute)
 Numerous historical logging framework used this to enrich the logs with contextual information, to structure the logs (by
 opening "scopes"). This was easy, lock-free by design and "magical".
@@ -74,89 +74,15 @@ A Client can be temporarily registered and act as a local log interceptor that c
 site. In this scenario, an ActivityMonitor can be used as a kind of information channel between the callees up to their
 caller. 
 
-This is described in more details in [Client](Client/README.md).
+This is described in more details in [Client](Client/README.md), including how a temporary client lets a
+test assert on what the code logged.
 
 
-## Using a client to assert on what the code logged
+## Filters and tags
 
-The local client architecture enables an interesting pattern for tests. `CollectTexts` registers a
-client that captures what was logged, so the assertion is on the *story* the code told, not on its
-return values. This is
-[`demo_using_CollectTexts`](../Tests/CK.ActivityMonitor.Tests/DocumentationCodeSnippets.cs), verbatim:
-
-```csharp
-[Test]
-public void demo_using_CollectTexts()
-{
-    var monitor = new ActivityMonitor();
-
-    EventHandler<ActionEvent>? sender = null;
-
-    sender += OnAction;
-
-    using( monitor.CollectTexts( out var texts ) )
-    {
-        sender.Invoke( null, new ActionEvent( monitor, ( monitor, i ) => monitor.Info( $"Action {i}" ) ) );
-        sender.Invoke( monitor, new ActionEvent( monitor, null ) );
-        texts.ShouldBe( new[]
-        {
-            "Received Action and executing it.",
-            "Action 3712",
-            "Received a null Action. Ignoring it."
-        } );
-    }
-
-    static void OnAction( object? sender, ActionEvent e )
-    {
-        if( e.Action == null ) e.Monitor.Warn( "Received a null Action. Ignoring it." );
-        else
-        {
-            e.Monitor.Info( "Received Action and executing it." );
-            e.Action( e.Monitor, 3712 );
-        }
-    }
-}
-```
-
-`ActionEvent` is an [`EventMonitoredArgs`](EventMonitoredArgs.cs), which is what lets the handler log
-into the monitor of the event rather than into one it captured.
-## Standard LogFilter names
-A [LogFilter](LogFilter.cs) must apply to Groups of logs and to Lines of logs. It can be expressed as **{Group,Line}** strings
-like `"{Error,Trace}"` or predefined couples `"Debug"`.
-
-A `LogFilter` is usually used as a "Minimal Filter": multiple participants declare their "MinimalFilter" and the resulting filter
-is the lowest one: combining 2 LogFilters results in a `LogFilter` that satisfies both of them: “{Error,Trace}” combined
-with “{Warn,Warn}” is “{Warn,Trace}”.
-
-[LogClamper](LogClamper.cs) enables a `LogFilter` to act as a strong filter.
-More on this [here](ActivityMonitor/TagFiltering.md).
-
-### .Net standard conventions
-The standard LogFilter have been defined based on the [recommended verbosity option for command lines](https://learn.microsoft.com/en-us/dotnet/standard/commandline/syntax#the---verbosity-option).
-
-|   Name    |     Description   |
-|-----------|-------------------|
-|`Diagnostic` |`{Debug,Debug}` Everything is required.|
-|`Detailed`   |`{Trace,Trace}` OpenTrace and Trace appear but no OpenDebug nor Debug lines.|
-|`Normal`     |`{Info,Info}` OpenInfo and Fatal, Error, Warn or Info lines appear. This may be still a little "verbose" but captures key information. |
-|`Minimal`    |`{Info,Warn}` OpenInfo and Fatal, Error or Warn lines appear. Minimal should have enough context to understand issues. |
-|`Quiet`      |`{Error,Error}` Only errors are considered. This is our "minimal": errors should never be hidden. |
-
-To this list, the `Fatal` that is the strongest filter (`{Fatal,Fatal}`) is added. It should be avoided.
-
-### Other names
-Before this recommendation appears we used:
-
-|   Name    |     Description    |
-|-----------|--------------------|
-|`Debug`      | `{Debug,Debug}` |
-|`Trace`      | `{Trace,Trace}`|
-|`Verbose`    | `{Trace,Info}` |
-|`Monitor`    | `{Trace,Warn}` |
-|`Terse`      | `{Info,Warn}`  |
-|`Release`    | `{Error,Error}`|
-
-Those names are supported but the .Net standard ones should be preferred.
+A [LogFilter](LogFilter.cs) is a `{Group,Line}` couple of levels, used as a "Minimal Filter" that combines with the
+others; a [LogClamper](LogClamper.cs) makes it a strong filter, and tags refine filtering per log. The standard
+filter names, the clamping and the tag filters are described in [Filters and tag filtering](ActivityMonitor/README.md).
 
 ## IStaticLogger, IParallelLogger and IActivityMonitor
 The `IStaticLogger` is exposed by the static `ActivityMonitor.StaticLogger` property. It is close to
@@ -281,7 +207,8 @@ The core abstractions and the default `ActivityMonitor` implementation, plus:
   subscriber.
 - [`ActivityMonitorLogData`](ActivityMonitorLogData.md), the log entry itself, its pooled
   `ActivityMonitorExternalLogData` counterpart and the [`PoolDiagnostics`](PoolDiagnostics/PoolDiagnostics.cs) that
-  reports a missing `Release()` exactly, and [tag filtering](ActivityMonitor/TagFiltering.md).
+  reports a missing `Release()` exactly.
+- [Filters and tag filtering](ActivityMonitor/README.md).
 - The [DotNetEventSource](DotNetEventSource/README.md) bridge.
 - [`ActivityMonitorOptions`](ActivityMonitorOptions.cs), the flags of the monitor constructors:
   `SkipAutoConfiguration` opts out of the static `ActivityMonitor.AutoConfiguration`, and `WithInitialReplay` keeps
@@ -297,9 +224,7 @@ The core abstractions and the default `ActivityMonitor` implementation, plus:
   warnings go to `ActivityMonitor.StaticLogger`.
 
 `StaticLogger` exposes no `OpenGroup`: `IStaticLogger` derives from `IActivityLineEmitter`, which has
-no group member. Note that it goes further than "not offered" - the implementation passes
-`isOpenGroup: false` unconditionally, so the `isOpenGroup` argument of the line-emitter contract is
-silently ignored. Without a monitor to follow the execution path, an open and a close from two
+no group member, and the data it creates is always a line (its `isOpenGroup` argument is ignored). Without a monitor to follow the execution path, an open and a close from two
 different call sites would interleave with no way to tell which close matches which open.
 
 ## Topics

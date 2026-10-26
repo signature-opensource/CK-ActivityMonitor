@@ -71,18 +71,14 @@ m.Info( $"Done: {onSuccess} files succeed and {onError} failed." );
 
 ## The interpolated message is not always evaluated
 
-This is the reason the package exists in its current form. Thanks to the C# 10
+Thanks to the C# 10
 [interpolated handlers](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-10.0/improved-interpolated-strings#the-handler-pattern),
 the sender can **skip the evaluation of the interpolated message** based on the log level and tags -
-see [tag filtering](../CK.ActivityMonitor/ActivityMonitor/TagFiltering.md).
+see [tag filtering](../CK.ActivityMonitor/ActivityMonitor/README.md).
 
 So `m.Debug( $"Ticks: {ticks} for '{f}'." )` costs nothing when Debug is filtered out: the string is
 never built. Writing the same thing as `m.Debug( "Ticks: " + ticks + ...)` defeats it - the
 concatenation happens before the call.
-
-> An older, less intuitive set of "standard" extension methods used to exist, relying on a two-step
-> approach precisely to avoid that cost. **Those are deprecated, not this package** - the interpolated
-> handlers made them unnecessary.
 
 ## Bonus of the interpolated strings: .Net Type names format
 

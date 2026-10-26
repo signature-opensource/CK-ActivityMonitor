@@ -1,4 +1,4 @@
-# Tag based Log Filtering
+# Filters and tag filtering
 
 ## The basics of levels, filters and tags.
 
@@ -11,6 +11,33 @@ a [`LogFilter`](../LogFilter.cs) (a simple struct) defines two `LogLevelFilter`:
 
 LogFilter can be expressed as **{Group,Line}** strings like `"{Error,Trace}"` or predefined couples `"Debug"` is `"{Debug,Debug}"`,
 `"Verbose"` is `"{Trace,Info}"` (see the [code](../LogFilter.cs)).
+
+### Standard LogFilter names
+
+#### .Net standard conventions
+The standard LogFilter have been defined based on the [recommended verbosity option for command lines](https://learn.microsoft.com/en-us/dotnet/standard/commandline/syntax#the---verbosity-option).
+
+|   Name    |     Description   |
+|-----------|-------------------|
+|`Diagnostic` |`{Debug,Debug}` Everything is required.|
+|`Detailed`   |`{Trace,Trace}` OpenTrace and Trace appear but no OpenDebug nor Debug lines.|
+|`Normal`     |`{Info,Info}` OpenInfo and Fatal, Error, Warn or Info lines appear. This may be still a little "verbose" but captures key information. |
+|`Minimal`    |`{Info,Warn}` OpenInfo and Fatal, Error or Warn lines appear. Minimal should have enough context to understand issues. |
+|`Quiet`      |`{Error,Error}` Only errors are considered. This is our "minimal": errors should never be hidden. |
+
+To this list, the `Fatal` that is the strongest filter (`{Fatal,Fatal}`) is added. It should be avoided.
+
+#### Other names
+Other supported names (prefer the .NET standard ones):
+
+|   Name    |     Description    |
+|-----------|--------------------|
+|`Debug`      | `{Debug,Debug}` |
+|`Trace`      | `{Trace,Trace}`|
+|`Verbose`    | `{Trace,Info}` |
+|`Monitor`    | `{Trace,Warn}` |
+|`Terse`      | `{Info,Warn}`  |
+|`Release`    | `{Error,Error}`|
 
 `LogFilter` is intensively used by the ActivityMonitor since they have a nice property: they can be combined together with
 a simple rule. Combining 2 LogFilters results in a `LogFilter` that satisfies both of them: “{Error,Trace}” combined
@@ -39,7 +66,7 @@ Two `LogClamper` cannot be combined like `LogFilter` since a true `Clamp` cannot
 Now the tags. Tags are `CKTrait` (from CK.Core): a tag is a set of 0 to n strings that is highly normalized (reference equality)
 and provides set operations (Union, Intersection, Except, SymmetricExcept) in O(n).
 A log can be for instance tagged with “Sql|Machine|Dangerous|Facebook” (tags can be combined with “|” in the string
-or via the c# | operator). (Note: more performance improvements are possible here. You’re welcome 😉)
+or via the c# | operator).
 
 ## TagFilter
 
@@ -61,107 +88,54 @@ The static [ActivityMonitor.Tags](ActivityMonitor.Tags.cs) maintains and exposes
 ```
 The `Filters` are challenged before calling the string interpolation.
 
-Static thread-safe methods are available to modify these 2 lists: 
+Static thread-safe methods modify these 2 lists:
 
 ```csharp
-  /// <summary>
-  /// Clears existing filters (note that the <see cref="DefaultFilters"/> are kept).
-  /// </summary>
-  public static void ClearFilters();
-
-  /// <summary>
-  /// Adds a filter to the <see cref="Filters"/> list and returns the result
-  /// that may already not be the same as Filters if another thread modified it.
-  /// <para>
-  /// The new filter is positioned above the existing ones: it may have removed one or more
-  /// previous filters from the list if it overlaps them.
-  /// </para>
-  /// </summary>
-  /// <param name="tag">The tag to filter.</param>
-  /// <param name="c">The filter to apply.</param>
-  /// <returns>The modified list of filters that is used to filter logs.</returns>
-  public static IReadOnlyList<(CKTrait T, LogClamper F)> AddFilter( CKTrait tag, LogClamper c );
-
-  /// <summary>
-  /// Removes a filter from the <see cref="Filters"/> list (but not from the <see cref="DefaultFilters"/> one).
-  /// <para>
-  /// This removes the first occurrence (in priority order). Multiple occurrences may exist
-  /// if <see cref="LogLevelFilter.None"/> is used for the line or group filters. To remove all occurrences
-  /// simply loop while this returns true but recall that multiple threads can update this list concurrently.
-  /// </para>
-  /// </summary>
-  /// <param name="tag">The exact tag for which filter must be removed.</param>
-  /// <returns>True if an occurrence of the tag has been found and removed, false otherwise.</returns>
-  public static bool RemoveFilter( CKTrait tag );
-
-  /// <summary>
-  /// Updates all filters at once.
-  /// <para>
-  /// <see cref="DefaultFilters"/> are appended to this list and any useless filters
-  /// are optimized out.
-  /// </para>
-  /// </summary>
-  /// <param name="filters">Ordered final set of tags and associated clamper including the <see cref="DefaultFilters"/>.</param>
-  public static IReadOnlyList<(CKTrait T, LogClamper F)> SetFilters( (CKTrait, LogClamper)[] filters );
-
-  /// <summary>
-  /// Adds a filter to <see cref="DefaultFilters"/> list and returns the result
-  /// that may already not be the same as DefaultFilters if another thread modified it.
-  /// <para>
-  /// The new filter is positioned above the existing ones: it may have removed one or more
-  /// previous filters from the list if it overlaps them.
-  /// </para>
-  /// </summary>
-  /// <param name="tag">The tag to filter.</param>
-  /// <param name="c">The filter to apply.</param>
-  /// <returns>The modified list of default filters.</returns>
-  public static IReadOnlyList<(CKTrait T, LogClamper F)> AddDefaultFilter( CKTrait tag, LogClamper c );
-
-  /// <summary>
-  /// Removes a filter from the <see cref="DefaultFilters"/> list.
-  /// <para>
-  /// This removes the first occurrence (in priority order). Multiple occurrences may exist
-  /// if <see cref="LogLevelFilter.None"/> is used for the line or group filters. To remove all occurrences
-  /// simply loop while this returns true but recall that multiple threads can update this list concurrently.
-  /// </para>
-  /// </summary>
-  /// <param name="tag">The exact tag for which filter must be removed.</param>
-  /// <returns>True if an occurrence of the tag has been found and removed, false otherwise.</returns>
-  public static bool RemoveDefaultFilter( CKTrait tag );
+public static void ClearFilters();
+public static IReadOnlyList<(CKTrait T, LogClamper F)> AddFilter( CKTrait tag, LogClamper c );
+public static bool RemoveFilter( CKTrait tag );
+public static IReadOnlyList<(CKTrait T, LogClamper F)> SetFilters( (CKTrait, LogClamper)[] filters );
+public static IReadOnlyList<(CKTrait T, LogClamper F)> AddDefaultFilter( CKTrait tag, LogClamper c );
+public static bool RemoveDefaultFilter( CKTrait tag );
 ```
+
+| Method | Effect |
+|--------|--------|
+| `ClearFilters` | Clears the `Filters`; the `DefaultFilters` are kept. |
+| `AddFilter` | Adds a filter above the existing ones (it may remove the previous filters it overlaps) and returns the final `Filters`. |
+| `RemoveFilter` | Removes the first occurrence (in priority order) of the exact tag from the `Filters`, not from the `DefaultFilters`. |
+| `SetFilters` | Replaces the `Filters` at once: the `DefaultFilters` are appended and useless filters are optimized out. |
+| `AddDefaultFilter` | Adds a filter above the existing `DefaultFilters` and returns the new `DefaultFilters`. |
+| `RemoveDefaultFilter` | Removes the first occurrence (in priority order) of the exact tag from the `DefaultFilters`. |
+
+Multiple occurrences of a tag may exist when `LogLevelFilter.None` is used for the line or group filters.
+
 ### Default Tag Filters
 The `DefaultFilters` are typically registered by [static type initializers](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/static-constructors)
 of libraries that want, by default, that some of their logs should be filtered at a given level. Below an example
-of such use:
+of such use, for an imaginary library that tags its logs with "Sql":
 
-The tag is defined by any object (here an interface) as a static readonly field or property:
+The tag is defined by any type as a static readonly field or property:
 ```csharp
-  [IsMultiple]
-  public interface IDeviceHost : ISingletonAutoService
-  {
-      /// <summary>
-      /// Log tag set on the command and any event loop monitors.
-      /// This tag is configured to <see cref="LogFilter.Monitor"/> only in <see cref="ActivityMonitor.Tags.DefaultFilters"/>.
-      /// </summary>
-      public static CKTrait DeviceModel = ActivityMonitor.Tags.Register( "Device-Model" );
-
-      //...
-  }
-``` 
-And a static constructor of a class (here an internal one) configures its default behavior:
+public static class SqlLog
+{
+    public static readonly CKTrait Sql = ActivityMonitor.Tags.Register( "Sql" );
+}
+```
+And a static constructor of a class configures its default behavior:
 ```csharp
-  class DeviceHostLock
-  {
-      static DeviceHostLock()
-      {
-          ActivityMonitor.Tags.AddDefaultFilter( IDeviceHost.DeviceModel, new LogClamper( LogFilter.Monitor, true ) );
-      }
-  }
-``` 
+class SqlConnectionHelper
+{
+    static SqlConnectionHelper()
+    {
+        ActivityMonitor.Tags.AddDefaultFilter( SqlLog.Sql, new LogClamper( LogFilter.Monitor, true ) );
+    }
+}
+```
 
 ### Tag filtering: first subset wins
 
-This default configuration is easily overridden by any other filter added for "Device-Model" since order matters: the
+This default configuration is easily overridden by any other filter added for "Sql" since order matters: the
 first tag in the final `Filters` array that combines the added filters and the default ones that appear in the logged
 tags defines the `LogClamper` to use (in other words, the first tag's filter that is a subset of the log's tags wins).
 
