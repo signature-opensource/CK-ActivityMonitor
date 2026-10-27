@@ -9,6 +9,30 @@ namespace CK.Core.Tests.Monitoring;
 public class TagFilteringTests
 {
     [Test]
+    public void RemoveFilter_and_RemoveDefaultFilter_return_whether_the_tag_has_been_removed()
+    {
+        ActivityMonitor.Tags.ClearFilters();
+        ActivityMonitor.Tags.AddFilter( TestHelper.Tag1, LogClamper.Parse( "Release!" ) );
+        try
+        {
+            ActivityMonitor.Tags.RemoveFilter( TestHelper.Tag2 ).ShouldBeFalse();
+            ActivityMonitor.Tags.RemoveFilter( TestHelper.Tag1 ).ShouldBeTrue();
+            ActivityMonitor.Tags.RemoveFilter( TestHelper.Tag1 ).ShouldBeFalse();
+            ActivityMonitor.Tags.Filters.ShouldNotContain( f => f.T == TestHelper.Tag1 );
+
+            ActivityMonitor.Tags.AddDefaultFilter( TestHelper.Tag3, LogClamper.Parse( "Release!" ) );
+            ActivityMonitor.Tags.RemoveDefaultFilter( TestHelper.Tag2 ).ShouldBeFalse();
+            ActivityMonitor.Tags.RemoveDefaultFilter( TestHelper.Tag3 ).ShouldBeTrue();
+            ActivityMonitor.Tags.RemoveDefaultFilter( TestHelper.Tag3 ).ShouldBeFalse();
+        }
+        finally
+        {
+            ActivityMonitor.Tags.ClearFilters();
+            ActivityMonitor.Tags.RemoveDefaultFilter( TestHelper.Tag3 );
+        }
+    }
+
+    [Test]
     public void single_tag_configuration()
     {
         var m = new ActivityMonitor( ActivityMonitorOptions.SkipAutoConfiguration );

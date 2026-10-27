@@ -167,9 +167,7 @@ public sealed partial class ActivityMonitor
         /// <returns>True if an occurrence of the tag has been found and removed, false otherwise.</returns>
         public static bool RemoveFilter( CKTrait tag )
         {
-            var prev = _defaultFilters;
-            var def = Util.InterlockedSet( ref _filters, tag, ( filters, t ) => Remove( filters, t ) );
-            if( prev != def )
+            if( InterlockedRemove( ref _filters, tag ) )
             {
                 UpdateFinalFilters();
                 return true;
@@ -231,14 +229,26 @@ public sealed partial class ActivityMonitor
         /// <returns>True if an occurrence of the tag has been found and removed, false otherwise.</returns>
         public static bool RemoveDefaultFilter( CKTrait tag )
         {
-            var prev = _defaultFilters;
-            var def = Util.InterlockedSet( ref _defaultFilters, tag, ( filters, t ) => Remove( filters, t ) );
-            if( prev != def )
+            if( InterlockedRemove( ref _defaultFilters, tag ) )
             {
                 UpdateFinalFilters();
                 return true;
             }
             return false;
+        }
+
+        // The removal is detected by the update itself: comparing with a previously read
+        // value would also see the concurrent updates of other threads.
+        static bool InterlockedRemove( ref (CKTrait, LogClamper)[] target, CKTrait tag )
+        {
+            bool removed = false;
+            Util.InterlockedSet( ref target, tag, ( filters, t ) =>
+            {
+                var r = Remove( filters, t );
+                removed = r != filters;
+                return r;
+            } );
+            return removed;
         }
 
         static (CKTrait, LogClamper)[] Remove( (CKTrait, LogClamper)[] filters, CKTrait t )
