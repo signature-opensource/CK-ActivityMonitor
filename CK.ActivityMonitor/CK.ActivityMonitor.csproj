@@ -10,6 +10,6 @@
     </Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CK.Core" Version="26.0.2" />
+    <PackageReference Include="CK.Core" Version="27.0.0-0.cris-auth.0.ci.4" />
   </ItemGroup>
 </Project>
