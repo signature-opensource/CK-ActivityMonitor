@@ -3,6 +3,6 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CK.Core" Version="27.0.0-0.cris-auth" />
+    <PackageReference Include="CK.Core" Version="27.0.0-0.uc.0.ci.7" />
   </ItemGroup>
 </Project>
