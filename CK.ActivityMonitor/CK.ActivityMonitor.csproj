@@ -1,13 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Description>
-      Hierarchical logger API. Main types are:
-      - LogFile with a central static RooLogPath property.
-      - IActivityMonitor and its implementation is a logger that must follow the code path.
-      - IActivityMonitorClient and standard clients like ActivityMonitorTextWriterClient are local log sinks.
-      - AsycLock with reentrancy management thanks to the IActivityMonitor.
-    </Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CK.Core" Version="27.0.0-0.cris-auth" />
